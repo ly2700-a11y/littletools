@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>学习桌宠监督器</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=ZCOOL+KuaiLe&family=Noto+Sans+SC:wght@400;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <header class="widget-titlebar" id="widgetTitlebar">
+      <p class="title">学习桌宠</p>
+      <div class="win-controls">
+        <button id="pinBtn" class="win-btn" title="切换置顶">置顶: 开</button>
+        <button id="minBtn" class="win-btn" title="最小化窗口">最小化</button>
+        <button id="closeBtn" class="win-btn danger" title="关闭窗口">关闭</button>
+      </div>
+    </header>
+
+    <main class="app">
+      <header class="hero">
+        <h1>学习桌宠监督器</h1>
+        <p>专治学习时手痒摸鱼</p>
+      </header>
+
+      <section class="panel timer-panel">
+        <div class="timer-head">
+          <h2>专注计时</h2>
+          <div class="mode-group" role="tablist" aria-label="计时模式">
+            <button class="mode-btn active" data-mode="pomodoro">番茄 25</button>
+            <button class="mode-btn" data-mode="shortBreak">短休 5</button>
+            <button class="mode-btn" data-mode="longBreak">长休 15</button>
+          </div>
+        </div>
+
+        <p class="countdown" aria-live="polite">25:00</p>
+
+        <div class="controls">
+          <button id="startPauseBtn" class="primary">开始</button>
+          <button id="resetBtn" class="ghost">重置</button>
+        </div>
+
+        <div class="stats">
+          <article>
+            <h3>完成专注轮次</h3>
+            <p id="focusCount">0</p>
+          </article>
+          <article>
+            <h3>摸鱼警告次数</h3>
+            <p id="slackCount">0</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="panel pet-panel">
+        <div id="pet" class="pet calm" aria-label="桌宠状态">
+          <div class="pet-face">
+            <span class="eye eye-left"></span>
+            <span class="eye eye-right"></span>
+            <span class="mouth"></span>
+          </div>
+        </div>
+        <p id="petText" class="pet-text">我盯着你学习，别开小差。</p>
+      </section>
+
+      <section class="panel rule-panel">
+        <h2>监督规则</h2>
+        <ul>
+          <li>学习计时中切到别的标签页超过 12 秒，记 1 次警告。</li>
+          <li>警告达到 3 次，桌宠会进入高压监督模式。</li>
+          <li>每完成一次番茄钟，自动增加专注轮次并保存记录。</li>
+        </ul>
+      </section>
+    </main>
+
+    <script src="app.js"></script>
+  </body>
+</html>
