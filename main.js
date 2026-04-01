@@ -70,13 +70,13 @@ function toggleMiniMode() {
     setTimeout(() => {
       mainWindow.setResizable(false);
       mainWindow.setAlwaysOnTop(true, "screen-saver");
-      // 右边距 24px，底部距 Dock 24px，不加动画避免偏移
+      // 右边距 20px，底部距 Dock 20px
       mainWindow.setBounds(
         {
-          x: workArea.x + workArea.width - 300 - 24,
-          y: workArea.y + workArea.height - 80 - 24,
-          width: 300,
-          height: 80,
+          x: workArea.x + workArea.width - 340 - 20,
+          y: workArea.y + workArea.height - 86 - 20,
+          width: 340,
+          height: 86,
         },
         false
       );

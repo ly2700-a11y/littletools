@@ -356,8 +356,8 @@ body.mini {
   justify-content: space-between;
   gap: 10px;
   width: 100%;
-  height: 80px;
-  padding: 0 14px;
+  height: 86px;
+  padding: 0 18px 0 14px;
   background: linear-gradient(135deg, var(--bg-top), var(--bg-bottom));
   border: 2px solid var(--line);
   border-radius: 18px;
@@ -366,6 +366,8 @@ body.mini {
   position: fixed;
   inset: 0;
   z-index: 100;
+  box-sizing: border-box;
+  overflow: hidden;
 }
 
 body.mini .mini-bar {
