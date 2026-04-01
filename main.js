@@ -68,6 +68,7 @@ function toggleMiniMode() {
     // 先通知渲染层隐藏内容，再缩小窗口，避免内容闪现
     mainWindow.webContents.send("widget:mode", "mini");
     setTimeout(() => {
+      mainWindow.setMinimumSize(1, 1);
       mainWindow.setResizable(false);
       mainWindow.setAlwaysOnTop(true, "screen-saver");
       // 右边距 20px，底部距 Dock 20px
@@ -86,6 +87,7 @@ function toggleMiniMode() {
     isMini = false;
     mainWindow.webContents.send("widget:mode", "full");
     setTimeout(() => {
+      mainWindow.setMinimumSize(360, 580);
       mainWindow.setResizable(true);
       if (prevBounds) mainWindow.setBounds(prevBounds, false);
     }, 80);
