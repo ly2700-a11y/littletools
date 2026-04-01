@@ -1,7 +1,9 @@
 const path = require("path");
-const { app, BrowserWindow, ipcMain } = require("electron");
+const { app, BrowserWindow, ipcMain, screen } = require("electron");
 
 let mainWindow;
+let isMini = false;
+let prevBounds = null;
 
 function createWindow() {
   mainWindow = new BrowserWindow({
@@ -54,10 +56,32 @@ ipcMain.handle("widget:toggle-pin", () => {
 });
 
 ipcMain.handle("widget:minimize", () => {
-  if (mainWindow) {
-    mainWindow.minimize();
-  }
+  if (!mainWindow) return "full";
+  return toggleMiniMode();
 });
+
+function toggleMiniMode() {
+  if (!isMini) {
+    prevBounds = mainWindow.getBounds();
+    const { workAreaSize } = screen.getPrimaryDisplay();
+    isMini = true;
+    mainWindow.setResizable(false);
+    mainWindow.setSize(300, 80, true);
+    mainWindow.setPosition(
+      workAreaSize.width - 316,
+      workAreaSize.height - 108,
+      true
+    );
+    mainWindow.webContents.send("widget:mode", "mini");
+    return "mini";
+  } else {
+    isMini = false;
+    mainWindow.setResizable(true);
+    if (prevBounds) mainWindow.setBounds(prevBounds, true);
+    mainWindow.webContents.send("widget:mode", "full");
+    return "full";
+  }
+}
 
 ipcMain.handle("widget:close", () => {
   if (mainWindow) {

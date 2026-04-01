@@ -110,6 +110,13 @@ const seqTrack = document.getElementById("seqTrack");
 const seqStandardBtn = document.getElementById("seqStandard");
 const seqClearBtn = document.getElementById("seqClear");
 
+// mini bar
+const miniDotEl = document.getElementById("miniDot");
+const miniTimerEl = document.getElementById("miniTimer");
+const miniLabelEl = document.getElementById("miniLabel");
+const miniPlayBtn = document.getElementById("miniPlayBtn");
+const miniExpandBtn = document.getElementById("miniExpandBtn");
+
 const isDesktop = Boolean(window.desktopWidget);
 
 // ─── Render ──────────────────────────────────────────────────────────────────
@@ -121,12 +128,14 @@ function formatTime(totalSeconds) {
 }
 
 function renderTimer() {
-  countdownEl.textContent = formatTime(state.secondsLeft);
+  const txt = formatTime(state.secondsLeft);
+  countdownEl.textContent = txt;
   const pct =
     state.totalSeconds > 0
       ? ((state.totalSeconds - state.secondsLeft) / state.totalSeconds) * 100
       : 100;
   progressFillEl.style.width = `${pct}%`;
+  syncMiniBar();
 }
 
 function renderStats() {
@@ -346,6 +355,37 @@ function onVisibilityChanged() {
   else updatePetByState();
 }
 
+function syncMiniBar() {
+  miniTimerEl.textContent = formatTime(state.secondsLeft);
+  const mood = state.strictMode
+    ? "strict"
+    : state.currentType === "pomodoro"
+    ? "calm"
+    : "warn";
+  miniDotEl.className = `mini-dot ${mood}`;
+  const typeText =
+    state.currentType === "pomodoro"
+      ? "专注"
+      : state.currentType === "shortBreak"
+      ? "短休"
+      : "长休";
+  miniLabelEl.textContent = state.isRunning
+    ? `${typeText}中`
+    : state.secondsLeft === getDuration(state.currentType)
+    ? "就绪"
+    : "已暂停";
+  miniPlayBtn.textContent = state.isRunning ? "⏸" : "▶";
+}
+
+function enterMini() {
+  document.body.classList.add("mini");
+  syncMiniBar();
+}
+
+function exitMini() {
+  document.body.classList.remove("mini");
+}
+
 function bindDesktopControls() {
   if (!isDesktop) {
     pinBtn.style.display = "none";
@@ -366,6 +406,16 @@ function bindDesktopControls() {
   minBtn.addEventListener("click", () => window.desktopWidget.minimize());
   closeBtn.addEventListener("click", () => window.desktopWidget.close());
 }
+
+miniPlayBtn.addEventListener("click", () => {
+  if (state.isRunning) stopTimer();
+  else startTimer();
+});
+
+miniExpandBtn.addEventListener("click", () => {
+  if (isDesktop) window.desktopWidget.minimize();
+  else exitMini();
+});
 
 startPauseBtn.addEventListener("click", () => {
   if (state.isRunning) stopTimer();
@@ -416,6 +466,13 @@ window.addEventListener("focus", () => {
 
 if ("Notification" in window && Notification.permission === "default") {
   Notification.requestPermission();
+}
+
+if (isDesktop) {
+  window.desktopWidget.onMode((mode) => {
+    if (mode === "mini") enterMini();
+    else exitMini();
+  });
 }
 
 renderTimer();
