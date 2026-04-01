@@ -282,6 +282,7 @@ function skipSession() {
 
 function updateButtons() {
   startPauseBtn.textContent = state.isRunning ? "暂停" : "开始";
+  syncMiniBar();
 }
 
 // ─── Settings drawer ─────────────────────────────────────────────────────────
