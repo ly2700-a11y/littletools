@@ -63,22 +63,32 @@ ipcMain.handle("widget:minimize", () => {
 function toggleMiniMode() {
   if (!isMini) {
     prevBounds = mainWindow.getBounds();
-    const { workAreaSize } = screen.getPrimaryDisplay();
+    const { workArea } = screen.getPrimaryDisplay();
     isMini = true;
-    mainWindow.setResizable(false);
-    mainWindow.setSize(300, 80, true);
-    mainWindow.setPosition(
-      workAreaSize.width - 316,
-      workAreaSize.height - 108,
-      true
-    );
+    // 先通知渲染层隐藏内容，再缩小窗口，避免内容闪现
     mainWindow.webContents.send("widget:mode", "mini");
+    setTimeout(() => {
+      mainWindow.setResizable(false);
+      mainWindow.setAlwaysOnTop(true, "screen-saver");
+      // 右边距 24px，底部距 Dock 24px，不加动画避免偏移
+      mainWindow.setBounds(
+        {
+          x: workArea.x + workArea.width - 300 - 24,
+          y: workArea.y + workArea.height - 80 - 24,
+          width: 300,
+          height: 80,
+        },
+        false
+      );
+    }, 80);
     return "mini";
   } else {
     isMini = false;
-    mainWindow.setResizable(true);
-    if (prevBounds) mainWindow.setBounds(prevBounds, true);
     mainWindow.webContents.send("widget:mode", "full");
+    setTimeout(() => {
+      mainWindow.setResizable(true);
+      if (prevBounds) mainWindow.setBounds(prevBounds, false);
+    }, 80);
     return "full";
   }
 }

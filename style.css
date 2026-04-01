@@ -345,6 +345,11 @@ button {
 
 /* ── Mini bar ────────────────────────────────────────────────────────────────── */
 
+body.mini {
+  overflow: hidden;
+  background: transparent;
+}
+
 .mini-bar {
   display: none;
   align-items: center;
