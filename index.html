@@ -31,17 +31,56 @@
       <section class="panel timer-panel">
         <div class="timer-head">
           <h2>专注计时</h2>
-          <div class="mode-group" role="tablist" aria-label="计时模式">
-            <button class="mode-btn active" data-mode="pomodoro">番茄 25</button>
-            <button class="mode-btn" data-mode="shortBreak">短休 5</button>
-            <button class="mode-btn" data-mode="longBreak">长休 15</button>
+          <button id="settingsToggle" class="ghost small">⚙ 设置</button>
+        </div>
+
+        <div class="settings-drawer" id="settingsDrawer">
+          <div class="settings-row">
+            <label class="setting-item">
+              <span>专注</span>
+              <input type="number" id="inputFocus" min="1" max="180" value="25" />
+              <span>分钟</span>
+            </label>
+            <label class="setting-item">
+              <span>短休</span>
+              <input type="number" id="inputShort" min="1" max="60" value="5" />
+              <span>分钟</span>
+            </label>
+            <label class="setting-item">
+              <span>长休</span>
+              <input type="number" id="inputLong" min="1" max="120" value="15" />
+              <span>分钟</span>
+            </label>
+          </div>
+
+          <div class="seq-section">
+            <p class="seq-label">自定义循环序列 <small>点击添加，点 × 删除</small></p>
+            <div class="seq-add-btns">
+              <button class="chip-add pomodoro" data-type="pomodoro">＋ 专注</button>
+              <button class="chip-add shortBreak" data-type="shortBreak">＋ 短休</button>
+              <button class="chip-add longBreak" data-type="longBreak">＋ 长休</button>
+            </div>
+            <div id="seqTrack" class="seq-track"></div>
+            <div class="seq-footer">
+              <button id="seqStandard" class="ghost small">标准番茄（4专注＋长休）</button>
+              <button id="seqClear" class="ghost small">清空</button>
+            </div>
           </div>
         </div>
 
+        <div class="session-info-row">
+          <span id="sessionBadge" class="session-badge pomodoro">专注 · 第1轮</span>
+          <span id="seqProgress" class="seq-progress">1 / 5</span>
+        </div>
+
         <p class="countdown" aria-live="polite">25:00</p>
+        <div class="progress-bar" role="progressbar">
+          <div id="progressFill" class="progress-fill"></div>
+        </div>
 
         <div class="controls">
           <button id="startPauseBtn" class="primary">开始</button>
+          <button id="skipBtn" class="ghost">跳过</button>
           <button id="resetBtn" class="ghost">重置</button>
         </div>
 
@@ -71,9 +110,10 @@
       <section class="panel rule-panel">
         <h2>监督规则</h2>
         <ul>
-          <li>学习计时中切到别的标签页超过 12 秒，记 1 次警告。</li>
-          <li>警告达到 3 次，桌宠会进入高压监督模式。</li>
-          <li>每完成一次番茄钟，自动增加专注轮次并保存记录。</li>
+          <li>切到别的窗口或标签页超过 12 秒，记 1 次警告。</li>
+          <li>警告达到 3 次，桌宠进入高压监督模式。</li>
+          <li>每完成一次专注轮次，自动记录并保存。</li>
+          <li>在设置里可以自定义时长和循环序列。</li>
         </ul>
       </section>
     </main>

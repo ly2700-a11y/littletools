@@ -340,3 +340,221 @@ button {
     flex: 1;
   }
 }
+
+/* ── Small button variant ──────────────────────────────────────────────────── */
+
+.ghost.small,
+.primary.small {
+  padding: 5px 10px;
+  font-size: 12px;
+  border-radius: 8px;
+}
+
+/* ── Settings drawer ──────────────────────────────────────────────────────── */
+
+.settings-drawer {
+  overflow: hidden;
+  max-height: 0;
+  opacity: 0;
+  transition: max-height 0.35s ease, opacity 0.25s ease;
+}
+
+.settings-drawer.open {
+  max-height: 600px;
+  opacity: 1;
+}
+
+.settings-row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 10px 0 6px;
+}
+
+.setting-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.setting-item input[type="number"] {
+  width: 52px;
+  padding: 4px 6px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  font: inherit;
+  text-align: center;
+}
+
+/* ── Sequence builder ────────────────────────────────────────────────────── */
+
+.seq-section {
+  border-top: 1px solid var(--line);
+  padding-top: 10px;
+  margin-top: 8px;
+}
+
+.seq-label {
+  margin: 0 0 8px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.seq-label small {
+  opacity: 0.6;
+  font-weight: 400;
+}
+
+.seq-add-btns {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+}
+
+.chip-add {
+  padding: 5px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.chip-add.pomodoro {
+  background: #dbeafe;
+  border-color: #93c5fd;
+  color: #1e40af;
+}
+
+.chip-add.shortBreak {
+  background: #dcfce7;
+  border-color: #86efac;
+  color: #166534;
+}
+
+.chip-add.longBreak {
+  background: #fef9c3;
+  border-color: #fde047;
+  color: #713f12;
+}
+
+.seq-track {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  min-height: 36px;
+  padding: 6px;
+  border: 1px dashed var(--line);
+  border-radius: 10px;
+  align-items: center;
+}
+
+.seq-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 6px 3px 8px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.seq-chip.pomodoro {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.seq-chip.shortBreak {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.seq-chip.longBreak {
+  background: #fef9c3;
+  color: #713f12;
+}
+
+.seq-chip.active {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.seq-chip-del {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1;
+  padding: 0 1px;
+  opacity: 0.5;
+  color: inherit;
+}
+
+.seq-chip-del:hover {
+  opacity: 1;
+}
+
+.seq-footer {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+/* ── Session info row ────────────────────────────────────────────────────── */
+
+.session-info-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 10px;
+}
+
+.session-badge {
+  padding: 4px 10px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.session-badge.pomodoro {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.session-badge.shortBreak {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.session-badge.longBreak {
+  background: #fef9c3;
+  color: #713f12;
+}
+
+.seq-progress {
+  font-size: 12px;
+  opacity: 0.6;
+  font-weight: 600;
+}
+
+/* ── Progress bar ────────────────────────────────────────────────────────── */
+
+.progress-bar {
+  width: 100%;
+  height: 6px;
+  background: var(--line);
+  border-radius: 6px;
+  overflow: hidden;
+  margin-bottom: 4px;
+}
+
+.progress-fill {
+  height: 100%;
+  width: 0;
+  background: var(--accent);
+  border-radius: 6px;
+  transition: width 1s linear;
+}
