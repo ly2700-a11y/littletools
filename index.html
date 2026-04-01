@@ -86,12 +86,10 @@
 
         <div class="stats">
           <article>
-            <h3>完成专注轮次</h3>
-            <p id="focusCount">0</p>
-          </article>
-          <article>
-            <h3>摸鱼警告次数</h3>
-            <p id="slackCount">0</p>
+            <h3>本轮摸鱼警告 <span id="roundSlackCount" class="stat-num">0</span> 次</h3>
+            <ul id="slackLog" class="slack-log">
+              <li class="slack-log-empty">暂无警告，继续保持。</li>
+            </ul>
           </article>
         </div>
       </section>
@@ -115,6 +113,20 @@
           <li>每完成一次专注轮次，自动记录并保存。</li>
           <li>在设置里可以自定义时长和循环序列。</li>
         </ul>
+      </section>
+
+      <section class="panel history-panel">
+        <h2>学习总结</h2>
+        <div class="history-grid">
+          <article>
+            <h3>总完成专注轮次</h3>
+            <p id="focusCount" class="big-num">0</p>
+          </article>
+          <article>
+            <h3>总摸鱼警告次数</h3>
+            <p id="totalSlackCount" class="big-num">0</p>
+          </article>
+        </div>
       </section>
     </main>
 

@@ -83,6 +83,7 @@ const state = {
   hiddenStart: null,
   strictMode: false,
   stats: loadStats(),
+  roundSlacks: [],
 };
 
 // ─── DOM refs ────────────────────────────────────────────────────────────────
@@ -92,7 +93,9 @@ const startPauseBtn = document.getElementById("startPauseBtn");
 const skipBtn = document.getElementById("skipBtn");
 const resetBtn = document.getElementById("resetBtn");
 const focusCountEl = document.getElementById("focusCount");
-const slackCountEl = document.getElementById("slackCount");
+const totalSlackCountEl = document.getElementById("totalSlackCount");
+const roundSlackCountEl = document.getElementById("roundSlackCount");
+const slackLogEl = document.getElementById("slackLog");
 const petEl = document.getElementById("pet");
 const petTextEl = document.getElementById("petText");
 const pinBtn = document.getElementById("pinBtn");
@@ -140,7 +143,33 @@ function renderTimer() {
 
 function renderStats() {
   focusCountEl.textContent = String(state.stats.focusCount);
-  slackCountEl.textContent = String(state.stats.slackCount);
+  totalSlackCountEl.textContent = String(state.stats.slackCount);
+  renderRoundSlacks();
+}
+
+function renderRoundSlacks() {
+  roundSlackCountEl.textContent = String(state.roundSlacks.length);
+  slackLogEl.innerHTML = "";
+  if (state.roundSlacks.length === 0) {
+    const li = document.createElement("li");
+    li.className = "slack-log-empty";
+    li.textContent = "暂无警告，继续保持。";
+    slackLogEl.appendChild(li);
+    return;
+  }
+  state.roundSlacks.forEach((entry) => {
+    const li = document.createElement("li");
+    const time = document.createElement("span");
+    time.className = "slack-time";
+    time.textContent = entry.time;
+    const reason = document.createElement("span");
+    reason.className = "slack-reason";
+    reason.textContent = entry.reason;
+    li.appendChild(time);
+    li.appendChild(reason);
+    slackLogEl.appendChild(li);
+  });
+  slackLogEl.scrollTop = slackLogEl.scrollHeight;
 }
 
 function renderSessionBadge() {
@@ -272,7 +301,9 @@ function resetTimer() {
   stopTimer();
   currentSeqIndex = 0;
   state.strictMode = false;
+  state.roundSlacks = [];
   loadSessionFromSeq();
+  renderStats();
 }
 
 function skipSession() {
@@ -332,9 +363,12 @@ function handleSlack() {
   if (!state.isRunning || state.currentType !== "pomodoro") return;
   state.stats.slackCount += 1;
   saveStats();
+  const now = new Date();
+  const hhmm = String(now.getHours()).padStart(2, "0") + ":" + String(now.getMinutes()).padStart(2, "0");
+  state.roundSlacks.push({ time: hhmm, reason: "切走窗口超过 12 秒" });
   renderStats();
   setPetMood("warn", "摸鱼被抓到了，回去学习。");
-  if (state.stats.slackCount >= 3) {
+  if (state.roundSlacks.length >= 3) {
     state.strictMode = true;
     setPetMood("strict", "已经三次警告，专注 5 分钟证明你自己。");
   }

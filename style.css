@@ -662,3 +662,75 @@ body.mini .app {
   border-radius: 6px;
   transition: width 1s linear;
 }
+
+/* ── Slack log ─────────────────────────────────────────────────────────────── */
+
+.stat-num {
+  background: var(--warn);
+  color: #fff;
+  padding: 1px 7px;
+  border-radius: 6px;
+  font-size: 13px;
+  margin-left: 4px;
+}
+
+.slack-log {
+  list-style: none;
+  padding: 0;
+  margin: 8px 0 0;
+  max-height: 140px;
+  overflow-y: auto;
+}
+
+.slack-log li {
+  font-size: 13px;
+  padding: 5px 0;
+  border-bottom: 1px solid #f0ebe0;
+  display: flex;
+  gap: 6px;
+}
+
+.slack-log-empty {
+  opacity: 0.5;
+  font-style: italic;
+}
+
+.slack-log .slack-time {
+  color: var(--accent);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.slack-log .slack-reason {
+  color: var(--ink);
+}
+
+/* ── History panel ─────────────────────────────────────────────────────────── */
+
+.history-panel h2 {
+  margin: 0 0 10px;
+}
+
+.history-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.history-grid article {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 10px;
+  background: #fff;
+}
+
+.history-grid h3 {
+  margin: 0;
+  font-size: 13px;
+}
+
+.big-num {
+  margin: 8px 0 0;
+  font-size: 28px;
+  font-weight: 700;
+}
