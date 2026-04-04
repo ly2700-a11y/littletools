@@ -162,6 +162,14 @@
         <button id="miniPlayBtn" class="mini-btn" title="开始/暂停">▶</button>
         <button id="miniExpandBtn" class="mini-btn expand" title="展开">⤢</button>
       </div>
+      <!-- 小窗打卡遮罩：mini 模式下直接显示在 mini-bar 内 -->
+      <div id="miniCheckin" class="mini-checkin hidden">
+        <span class="mini-checkin-question">还在学习吗？</span>
+        <button id="miniCheckinBtn" class="mini-checkin-btn">✓ 在的</button>
+        <div class="mini-checkin-progress">
+          <div id="miniCheckinFill" class="mini-checkin-fill"></div>
+        </div>
+      </div>
     </div>
 
     <script src="app.js"></script>

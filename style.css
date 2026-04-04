@@ -402,6 +402,80 @@ button {
   transition: width 0.5s linear;
 }
 
+/* mini 模式下始终隐藏旧全屏遮罩（CSS 兜底，不依赖 JS 时序）*/
+body.mini .checkin-overlay {
+  display: none !important;
+}
+
+/* ── Mini checkin（mini 模式内嵌打卡遮罩）─────────────────────────────────── */
+
+.mini-checkin {
+  position: absolute;
+  inset: 0;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #fffbf2, #e8f0e5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  z-index: 10;
+  -webkit-app-region: no-drag;
+  animation: mini-checkin-in 0.18s ease;
+}
+
+.mini-checkin.hidden {
+  display: none;
+}
+
+@keyframes mini-checkin-in {
+  from { opacity: 0; transform: scale(0.97); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+.mini-checkin-question {
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.mini-checkin-btn {
+  border: 2px solid var(--accent-strong);
+  background: var(--accent);
+  color: #fff;
+  border-radius: 10px;
+  padding: 8px 18px;
+  font: inherit;
+  font-weight: 700;
+  font-size: 14px;
+  cursor: pointer;
+  line-height: 1;
+  white-space: nowrap;
+  -webkit-app-region: no-drag;
+}
+
+.mini-checkin-btn:active {
+  filter: brightness(0.88);
+}
+
+.mini-checkin-progress {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 5px;
+  background: var(--line);
+  border-radius: 0 0 16px 16px;
+  overflow: hidden;
+}
+
+.mini-checkin-fill {
+  height: 100%;
+  width: 100%;
+  background: var(--warn);
+  transition: width 0.5s linear;
+}
+
 /* ── Small button variant ──────────────────────────────────────────────────── */
 
 /* ── Mini bar ────────────────────────────────────────────────────────────────── */

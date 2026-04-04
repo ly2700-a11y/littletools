@@ -120,6 +120,9 @@ const miniTimerEl = document.getElementById("miniTimer");
 const miniLabelEl = document.getElementById("miniLabel");
 const miniPlayBtn = document.getElementById("miniPlayBtn");
 const miniExpandBtn = document.getElementById("miniExpandBtn");
+const miniCheckinEl = document.getElementById("miniCheckin");
+const miniCheckinBtn = document.getElementById("miniCheckinBtn");
+const miniCheckinFillEl = document.getElementById("miniCheckinFill");
 
 const isDesktop = Boolean(window.desktopWidget);
 
@@ -496,12 +499,18 @@ function scheduleCheckin() {
 
 function showCheckin() {
   if (!state.isRunning || state.currentType !== "pomodoro") return;
-  checkinOverlay.classList.remove("hidden");
   checkinLeft = CHECKIN_TIMEOUT;
   checkinBar.style.width = "100%";
+  miniCheckinFillEl.style.width = "100%";
+  // 两个 UI 同时激活：CSS `body.mini .checkin-overlay { display:none }` 会在
+  // mini 模式下自动屏蔽旧弹窗，无需依赖 isMiniMode 标志的时序正确性
+  checkinOverlay.classList.remove("hidden");
+  miniCheckinEl.classList.remove("hidden");
   checkinCountdown = setInterval(() => {
     checkinLeft -= 0.5;
-    checkinBar.style.width = `${(checkinLeft / CHECKIN_TIMEOUT) * 100}%`;
+    const pct = `${(checkinLeft / CHECKIN_TIMEOUT) * 100}%`;
+    checkinBar.style.width = pct;
+    miniCheckinFillEl.style.width = pct;
     if (checkinLeft <= 0) {
       dismissCheckin(false);
     }
@@ -512,6 +521,7 @@ function dismissCheckin(confirmed) {
   clearInterval(checkinCountdown);
   checkinCountdown = null;
   checkinOverlay.classList.add("hidden");
+  miniCheckinEl.classList.add("hidden");
   if (!confirmed) {
     handleSlack("打卡超时未响应");
   }
@@ -519,6 +529,7 @@ function dismissCheckin(confirmed) {
 }
 
 checkinBtn.addEventListener("click", () => dismissCheckin(true));
+miniCheckinBtn.addEventListener("click", () => dismissCheckin(true));
 
 // 计时器启停时管理打卡调度
 const _origStart = startTimer;
@@ -534,6 +545,7 @@ stopTimer = function () {
   clearTimeout(checkinTimer);
   clearInterval(checkinCountdown);
   checkinOverlay.classList.add("hidden");
+  miniCheckinEl.classList.add("hidden");
 };
 
 // ─── 锁屏检测 ──────────────────────────────────────────────────────────────
