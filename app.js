@@ -253,6 +253,7 @@ function notify(title, body) {
 
 function finishSession() {
   stopTimer();
+  playFinishBeep();
   const type = sequence[currentSeqIndex];
   if (type === "pomodoro") {
     state.stats.focusCount += 1;
@@ -509,6 +510,32 @@ function scheduleCheckin() {
   clearTimeout(checkinTimer);
   if (!state.isRunning || state.currentType !== "pomodoro") return;
   checkinTimer = setTimeout(showCheckin, settings.checkinInterval * 60 * 1000);
+}
+
+function playFinishBeep() {
+  try {
+    const volume = (settings.beepVolume ?? 60) / 100;
+    if (volume === 0) return;
+    const ctx = new AudioContext();
+    const freqs = [523, 659, 784]; // C5 → E5 → G5 三声递升
+    freqs.forEach((freq, i) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.type = "sine";
+      osc.frequency.value = freq;
+      const t = ctx.currentTime + i * 0.18;
+      const peak = volume * 2.5;
+      gain.gain.setValueAtTime(0, t);
+      gain.gain.linearRampToValueAtTime(peak, t + 0.01);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.3);
+      osc.start(t);
+      osc.stop(t + 0.3);
+    });
+  } catch {
+    // 浏览器不支持 AudioContext 时静默失败
+  }
 }
 
 function playCheckinBeep() {
