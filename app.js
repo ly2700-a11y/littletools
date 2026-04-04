@@ -516,19 +516,21 @@ function playCheckinBeep() {
     const volume = (settings.beepVolume ?? 60) / 100;
     if (volume === 0) return;
     const ctx = new AudioContext();
-    [0, 120].forEach((delayMs) => {
+    [0, 150].forEach((delayMs) => {
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
       osc.connect(gain);
       gain.connect(ctx.destination);
-      osc.type = "sine";
+      osc.type = "square";
       osc.frequency.value = 880;
       const t = ctx.currentTime + delayMs / 1000;
+      // gain 最大允许 2.0，让满量程时明显响亮
+      const peak = volume * 2;
       gain.gain.setValueAtTime(0, t);
-      gain.gain.linearRampToValueAtTime(volume, t + 0.01);
-      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.18);
+      gain.gain.linearRampToValueAtTime(peak, t + 0.01);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.25);
       osc.start(t);
-      osc.stop(t + 0.18);
+      osc.stop(t + 0.25);
     });
   } catch {
     // 浏览器不支持 AudioContext 时静默失败
