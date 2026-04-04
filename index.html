@@ -51,6 +51,11 @@
               <input type="number" id="inputLong" min="1" max="120" value="15" />
               <span>分钟</span>
             </label>
+            <label class="setting-item">
+              <span>提问间隔</span>
+              <input type="number" id="inputCheck" min="1" max="60" value="10" />
+              <span>分钟</span>
+            </label>
           </div>
 
           <div class="seq-section">
@@ -108,10 +113,11 @@
       <section class="panel rule-panel">
         <h2>监督规则</h2>
         <ul>
-          <li>切到别的窗口或标签页超过 12 秒，记 1 次警告。</li>
+          <li>专注期间每隔设定的提问间隔会弹出确认框，需在 5 秒内点击确认。</li>
+          <li>未在 5 秒内确认，记 1 次摸鱼警告。</li>
           <li>警告达到 3 次，桌宠进入高压监督模式。</li>
           <li>每完成一次专注轮次，自动记录并保存。</li>
-          <li>在设置里可以自定义时长和循环序列。</li>
+          <li>在设置里可以自定义时长、循环序列和提问间隔。</li>
         </ul>
       </section>
 
@@ -142,6 +148,15 @@
       <div class="mini-actions">
         <button id="miniPlayBtn" class="mini-btn" title="开始/暂停">▶</button>
         <button id="miniExpandBtn" class="mini-btn expand" title="展开">⤢</button>
+      </div>
+    </div>
+
+    <!-- 专注确认弹窗 -->
+    <div id="focusCheckModal" class="focus-check-overlay" aria-modal="true" role="alertdialog" aria-labelledby="focusCheckTitle">
+      <div class="focus-check-card">
+        <p id="focusCheckTitle" class="focus-check-title">还在专注吗？</p>
+        <p class="focus-check-hint"><span id="focusCheckTimer">5</span> 秒内点击确认，否则记一次摸鱼</p>
+        <button id="focusCheckConfirm" class="primary">我还在！</button>
       </div>
     </div>
 

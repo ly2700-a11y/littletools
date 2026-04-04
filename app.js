@@ -15,7 +15,7 @@ function saveSettings() {
 }
 
 const settings = Object.assign(
-  { focus: 25, shortBreak: 5, longBreak: 15 },
+  { focus: 25, shortBreak: 5, longBreak: 15, checkInterval: 10 },
   loadSettings()
 );
 
@@ -80,7 +80,8 @@ const state = {
   totalSeconds: getDuration(sequence[0]),
   timerId: null,
   isRunning: false,
-  hiddenStart: null,
+  checkTimerId: null,
+  focusCheckCountdownId: null,
   strictMode: false,
   stats: loadStats(),
   roundSlacks: [],
@@ -109,9 +110,13 @@ const settingsDrawer = document.getElementById("settingsDrawer");
 const inputFocus = document.getElementById("inputFocus");
 const inputShort = document.getElementById("inputShort");
 const inputLong = document.getElementById("inputLong");
+const inputCheck = document.getElementById("inputCheck");
 const seqTrack = document.getElementById("seqTrack");
 const seqStandardBtn = document.getElementById("seqStandard");
 const seqClearBtn = document.getElementById("seqClear");
+const focusCheckModalEl = document.getElementById("focusCheckModal");
+const focusCheckTimerEl = document.getElementById("focusCheckTimer");
+const focusCheckConfirmBtn = document.getElementById("focusCheckConfirm");
 
 // mini bar
 const miniDotEl = document.getElementById("miniDot");
@@ -211,6 +216,7 @@ function renderSettingsInputs() {
   inputFocus.value = settings.focus;
   inputShort.value = settings.shortBreak;
   inputLong.value = settings.longBreak;
+  inputCheck.value = settings.checkInterval;
 }
 
 // ─── Pet ─────────────────────────────────────────────────────────────────────
@@ -284,6 +290,7 @@ function startTimer() {
   if (state.isRunning) return;
   state.isRunning = true;
   state.timerId = window.setInterval(tick, 1000);
+  startCheckTimer();
   updateButtons();
   updatePetByState();
 }
@@ -294,6 +301,7 @@ function stopTimer() {
     window.clearInterval(state.timerId);
     state.timerId = null;
   }
+  stopCheckTimer();
   updateButtons();
 }
 
@@ -330,9 +338,11 @@ function applySettings() {
   const f = parseInt(inputFocus.value, 10);
   const s = parseInt(inputShort.value, 10);
   const l = parseInt(inputLong.value, 10);
+  const c = parseInt(inputCheck.value, 10);
   if (f >= 1) settings.focus = f;
   if (s >= 1) settings.shortBreak = s;
   if (l >= 1) settings.longBreak = l;
+  if (c >= 1) settings.checkInterval = c;
   saveSettings();
   if (!state.isRunning) {
     state.secondsLeft = getDuration(state.currentType);
@@ -365,7 +375,7 @@ function handleSlack() {
   saveStats();
   const now = new Date();
   const hhmm = String(now.getHours()).padStart(2, "0") + ":" + String(now.getMinutes()).padStart(2, "0");
-  state.roundSlacks.push({ time: hhmm, reason: "切走窗口超过 12 秒" });
+  state.roundSlacks.push({ time: hhmm, reason: "未在时限内确认专注状态" });
   renderStats();
   setPetMood("warn", "摸鱼被抓到了，回去学习。");
   if (state.roundSlacks.length >= 3) {
@@ -374,20 +384,41 @@ function handleSlack() {
   }
 }
 
-function onVisibilityChanged() {
-  if (!state.isRunning || state.currentType !== "pomodoro") {
-    state.hiddenStart = null;
-    return;
+function dismissFocusCheckModal() {
+  if (state.focusCheckCountdownId !== null) {
+    window.clearInterval(state.focusCheckCountdownId);
+    state.focusCheckCountdownId = null;
   }
-  if (document.hidden) {
-    state.hiddenStart = Date.now();
-    return;
+  focusCheckModalEl.classList.remove("visible");
+}
+
+function showFocusCheckModal() {
+  if (!state.isRunning || state.currentType !== "pomodoro") return;
+  let remaining = 5;
+  focusCheckTimerEl.textContent = String(remaining);
+  focusCheckModalEl.classList.add("visible");
+  state.focusCheckCountdownId = window.setInterval(() => {
+    remaining -= 1;
+    focusCheckTimerEl.textContent = String(remaining);
+    if (remaining <= 0) {
+      dismissFocusCheckModal();
+      handleSlack();
+    }
+  }, 1000);
+}
+
+function startCheckTimer() {
+  stopCheckTimer();
+  if (state.currentType !== "pomodoro") return;
+  state.checkTimerId = window.setInterval(showFocusCheckModal, settings.checkInterval * 60 * 1000);
+}
+
+function stopCheckTimer() {
+  if (state.checkTimerId !== null) {
+    window.clearInterval(state.checkTimerId);
+    state.checkTimerId = null;
   }
-  if (!state.hiddenStart) return;
-  const ms = Date.now() - state.hiddenStart;
-  state.hiddenStart = null;
-  if (ms >= 12000) handleSlack();
-  else updatePetByState();
+  dismissFocusCheckModal();
 }
 
 function syncMiniBar() {
@@ -464,6 +495,11 @@ settingsToggleBtn.addEventListener("click", toggleDrawer);
 inputFocus.addEventListener("change", applySettings);
 inputShort.addEventListener("change", applySettings);
 inputLong.addEventListener("change", applySettings);
+inputCheck.addEventListener("change", applySettings);
+
+focusCheckConfirmBtn.addEventListener("click", () => {
+  dismissFocusCheckModal();
+});
 
 document.querySelectorAll(".chip-add").forEach((btn) => {
   btn.addEventListener("click", () => addSeqItem(btn.dataset.type));
@@ -483,20 +519,6 @@ seqClearBtn.addEventListener("click", () => {
   saveSequence();
   renderSeqTrack();
   renderSessionBadge();
-});
-
-document.addEventListener("visibilitychange", onVisibilityChanged);
-
-let blurStart = null;
-window.addEventListener("blur", () => {
-  blurStart = Date.now();
-});
-window.addEventListener("focus", () => {
-  if (!blurStart) return;
-  const start = blurStart;
-  blurStart = null;
-  if (Date.now() - start >= 12000) handleSlack();
-  else updatePetByState();
 });
 
 if ("Notification" in window && Notification.permission === "default") {
