@@ -1,5 +1,5 @@
 const path = require("path");
-const { app, BrowserWindow, ipcMain, screen } = require("electron");
+const { app, BrowserWindow, ipcMain, screen, powerMonitor } = require("electron");
 
 let mainWindow;
 let isMini = false;
@@ -32,6 +32,14 @@ function createWindow() {
 
 app.whenReady().then(() => {
   createWindow();
+
+  // 屏保/锁屏/休眠检测
+  powerMonitor.on("lock-screen", () => {
+    if (mainWindow) mainWindow.webContents.send("system:screen-locked");
+  });
+  powerMonitor.on("suspend", () => {
+    if (mainWindow) mainWindow.webContents.send("system:screen-locked");
+  });
 
   app.on("activate", () => {
     if (BrowserWindow.getAllWindows().length === 0) {

@@ -6,4 +6,5 @@ contextBridge.exposeInMainWorld("desktopWidget", {
   close: () => ipcRenderer.invoke("widget:close"),
   isPinned: () => ipcRenderer.invoke("widget:is-pinned"),
   onMode: (cb) => ipcRenderer.on("widget:mode", (_, mode) => cb(mode)),
+  onScreenLock: (cb) => ipcRenderer.on("system:screen-locked", () => cb()),
 });

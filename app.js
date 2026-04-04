@@ -15,7 +15,7 @@ function saveSettings() {
 }
 
 const settings = Object.assign(
-  { focus: 25, shortBreak: 5, longBreak: 15 },
+  { focus: 25, shortBreak: 5, longBreak: 15, checkinInterval: 8 },
   loadSettings()
 );
 
@@ -109,6 +109,7 @@ const settingsDrawer = document.getElementById("settingsDrawer");
 const inputFocus = document.getElementById("inputFocus");
 const inputShort = document.getElementById("inputShort");
 const inputLong = document.getElementById("inputLong");
+const inputCheckinInterval = document.getElementById("inputCheckinInterval");
 const seqTrack = document.getElementById("seqTrack");
 const seqStandardBtn = document.getElementById("seqStandard");
 const seqClearBtn = document.getElementById("seqClear");
@@ -211,6 +212,7 @@ function renderSettingsInputs() {
   inputFocus.value = settings.focus;
   inputShort.value = settings.shortBreak;
   inputLong.value = settings.longBreak;
+  inputCheckinInterval.value = settings.checkinInterval;
 }
 
 // ─── Pet ─────────────────────────────────────────────────────────────────────
@@ -330,9 +332,11 @@ function applySettings() {
   const f = parseInt(inputFocus.value, 10);
   const s = parseInt(inputShort.value, 10);
   const l = parseInt(inputLong.value, 10);
+  const c = parseInt(inputCheckinInterval.value, 10);
   if (f >= 1) settings.focus = f;
   if (s >= 1) settings.shortBreak = s;
   if (l >= 1) settings.longBreak = l;
+  if (c >= 1) settings.checkinInterval = c;
   saveSettings();
   if (!state.isRunning) {
     state.secondsLeft = getDuration(state.currentType);
@@ -359,13 +363,13 @@ function removeSeqItem(idx) {
   renderSessionBadge();
 }
 
-function handleSlack() {
+function handleSlack(reason) {
   if (!state.isRunning || state.currentType !== "pomodoro") return;
   state.stats.slackCount += 1;
   saveStats();
   const now = new Date();
   const hhmm = String(now.getHours()).padStart(2, "0") + ":" + String(now.getMinutes()).padStart(2, "0");
-  state.roundSlacks.push({ time: hhmm, reason: "切走窗口超过 12 秒" });
+  state.roundSlacks.push({ time: hhmm, reason });
   renderStats();
   setPetMood("warn", "摸鱼被抓到了，回去学习。");
   if (state.roundSlacks.length >= 3) {
@@ -374,21 +378,6 @@ function handleSlack() {
   }
 }
 
-function onVisibilityChanged() {
-  if (!state.isRunning || state.currentType !== "pomodoro") {
-    state.hiddenStart = null;
-    return;
-  }
-  if (document.hidden) {
-    state.hiddenStart = Date.now();
-    return;
-  }
-  if (!state.hiddenStart) return;
-  const ms = Date.now() - state.hiddenStart;
-  state.hiddenStart = null;
-  if (ms >= 12000) handleSlack();
-  else updatePetByState();
-}
 
 function syncMiniBar() {
   miniTimerEl.textContent = formatTime(state.secondsLeft);
@@ -469,6 +458,8 @@ document.querySelectorAll(".chip-add").forEach((btn) => {
   btn.addEventListener("click", () => addSeqItem(btn.dataset.type));
 });
 
+inputCheckinInterval.addEventListener("change", applySettings);
+
 seqStandardBtn.addEventListener("click", () => {
   sequence = makeStandardSequence();
   currentSeqIndex = 0;
@@ -485,19 +476,73 @@ seqClearBtn.addEventListener("click", () => {
   renderSessionBadge();
 });
 
-document.addEventListener("visibilitychange", onVisibilityChanged);
+// ─── 手动打卡 ──────────────────────────────────────────────────────────────
 
-let blurStart = null;
-window.addEventListener("blur", () => {
-  blurStart = Date.now();
-});
-window.addEventListener("focus", () => {
-  if (!blurStart) return;
-  const start = blurStart;
-  blurStart = null;
-  if (Date.now() - start >= 12000) handleSlack();
-  else updatePetByState();
-});
+const CHECKIN_TIMEOUT = 5; // 5 秒不回应算摸鱼
+
+const checkinOverlay = document.getElementById("checkinOverlay");
+const checkinBtn = document.getElementById("checkinBtn");
+const checkinBar = document.getElementById("checkinBar");
+
+let checkinTimer = null;
+let checkinCountdown = null;
+let checkinLeft = 0;
+
+function scheduleCheckin() {
+  clearTimeout(checkinTimer);
+  if (!state.isRunning || state.currentType !== "pomodoro") return;
+  checkinTimer = setTimeout(showCheckin, settings.checkinInterval * 60 * 1000);
+}
+
+function showCheckin() {
+  if (!state.isRunning || state.currentType !== "pomodoro") return;
+  checkinOverlay.classList.remove("hidden");
+  checkinLeft = CHECKIN_TIMEOUT;
+  checkinBar.style.width = "100%";
+  checkinCountdown = setInterval(() => {
+    checkinLeft -= 0.5;
+    checkinBar.style.width = `${(checkinLeft / CHECKIN_TIMEOUT) * 100}%`;
+    if (checkinLeft <= 0) {
+      dismissCheckin(false);
+    }
+  }, 500);
+}
+
+function dismissCheckin(confirmed) {
+  clearInterval(checkinCountdown);
+  checkinCountdown = null;
+  checkinOverlay.classList.add("hidden");
+  if (!confirmed) {
+    handleSlack("打卡超时未响应");
+  }
+  scheduleCheckin();
+}
+
+checkinBtn.addEventListener("click", () => dismissCheckin(true));
+
+// 计时器启停时管理打卡调度
+const _origStart = startTimer;
+const _origStop = stopTimer;
+
+startTimer = function () {
+  _origStart();
+  scheduleCheckin();
+};
+
+stopTimer = function () {
+  _origStop();
+  clearTimeout(checkinTimer);
+  clearInterval(checkinCountdown);
+  checkinOverlay.classList.add("hidden");
+};
+
+// ─── 锁屏检测 ──────────────────────────────────────────────────────────────
+
+if (isDesktop) {
+  window.desktopWidget.onScreenLock(() => {
+    handleSlack("屏幕锁定/进入屏保");
+  });
+}
 
 if ("Notification" in window && Notification.permission === "default") {
   Notification.requestPermission();
