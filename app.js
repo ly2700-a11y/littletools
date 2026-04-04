@@ -15,7 +15,7 @@ function saveSettings() {
 }
 
 const settings = Object.assign(
-  { focus: 25, shortBreak: 5, longBreak: 15, checkinInterval: 8 },
+  { focus: 25, shortBreak: 5, longBreak: 15, checkinInterval: 8, beepVolume: 60 },
   loadSettings()
 );
 
@@ -110,6 +110,8 @@ const inputFocus = document.getElementById("inputFocus");
 const inputShort = document.getElementById("inputShort");
 const inputLong = document.getElementById("inputLong");
 const inputCheckinInterval = document.getElementById("inputCheckinInterval");
+const inputBeepVolume = document.getElementById("inputBeepVolume");
+const beepVolumeLabel = document.getElementById("beepVolumeLabel");
 const seqTrack = document.getElementById("seqTrack");
 const seqStandardBtn = document.getElementById("seqStandard");
 const seqClearBtn = document.getElementById("seqClear");
@@ -216,6 +218,8 @@ function renderSettingsInputs() {
   inputShort.value = settings.shortBreak;
   inputLong.value = settings.longBreak;
   inputCheckinInterval.value = settings.checkinInterval;
+  inputBeepVolume.value = settings.beepVolume;
+  beepVolumeLabel.textContent = `${settings.beepVolume}%`;
 }
 
 // ─── Pet ─────────────────────────────────────────────────────────────────────
@@ -336,10 +340,12 @@ function applySettings() {
   const s = parseInt(inputShort.value, 10);
   const l = parseInt(inputLong.value, 10);
   const c = parseInt(inputCheckinInterval.value, 10);
+  const v = parseInt(inputBeepVolume.value, 10);
   if (f >= 1) settings.focus = f;
   if (s >= 1) settings.shortBreak = s;
   if (l >= 1) settings.longBreak = l;
   if (c >= 1) settings.checkinInterval = c;
+  if (v >= 0 && v <= 100) settings.beepVolume = v;
   saveSettings();
   if (!state.isRunning) {
     state.secondsLeft = getDuration(state.currentType);
@@ -463,6 +469,14 @@ document.querySelectorAll(".chip-add").forEach((btn) => {
 
 inputCheckinInterval.addEventListener("change", applySettings);
 
+inputBeepVolume.addEventListener("input", () => {
+  beepVolumeLabel.textContent = `${inputBeepVolume.value}%`;
+});
+inputBeepVolume.addEventListener("change", () => {
+  applySettings();
+  playCheckinBeep(); // 松手时播放预览音
+});
+
 seqStandardBtn.addEventListener("click", () => {
   sequence = makeStandardSequence();
   currentSeqIndex = 0;
@@ -499,6 +513,8 @@ function scheduleCheckin() {
 
 function playCheckinBeep() {
   try {
+    const volume = (settings.beepVolume ?? 60) / 100;
+    if (volume === 0) return;
     const ctx = new AudioContext();
     [0, 120].forEach((delayMs) => {
       const osc = ctx.createOscillator();
@@ -509,7 +525,7 @@ function playCheckinBeep() {
       osc.frequency.value = 880;
       const t = ctx.currentTime + delayMs / 1000;
       gain.gain.setValueAtTime(0, t);
-      gain.gain.linearRampToValueAtTime(0.35, t + 0.01);
+      gain.gain.linearRampToValueAtTime(volume, t + 0.01);
       gain.gain.exponentialRampToValueAtTime(0.001, t + 0.18);
       osc.start(t);
       osc.stop(t + 0.18);
