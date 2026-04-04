@@ -521,11 +521,11 @@ function playCheckinBeep() {
       const gain = ctx.createGain();
       osc.connect(gain);
       gain.connect(ctx.destination);
-      osc.type = "square";
+      osc.type = "sine";
       osc.frequency.value = 880;
       const t = ctx.currentTime + delayMs / 1000;
-      // gain 最大允许 2.0，让满量程时明显响亮
-      const peak = volume * 2;
+      // gain 最大允许 3.0，让满量程时明显响亮
+      const peak = volume * 3;
       gain.gain.setValueAtTime(0, t);
       gain.gain.linearRampToValueAtTime(peak, t + 0.01);
       gain.gain.exponentialRampToValueAtTime(0.001, t + 0.25);
