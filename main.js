@@ -1,9 +1,56 @@
 const path = require("path");
-const { app, BrowserWindow, ipcMain, screen, powerMonitor } = require("electron");
+const { app, BrowserWindow, ipcMain, screen, powerMonitor, Notification } = require("electron");
 
 let mainWindow;
 let isMini = false;
 let prevBounds = null;
+
+// ─── 锁屏期间计时器完成通知 ──────────────────────────────────────────
+let isScreenLocked = false;
+let finishAt = null;       // 预计完成的 Date.now() 时间戳
+let finishTimer = null;    // setTimeout 句柄
+let finishLabel = "";     // 通知正文
+
+function scheduleFinishNotification(timestamp, label) {
+  clearTimeout(finishTimer);
+  finishAt = timestamp;
+  finishLabel = label || "时间到";
+  const delay = timestamp - Date.now();
+  if (delay <= 0) {
+    onFinishFired();
+    return;
+  }
+  finishTimer = setTimeout(onFinishFired, delay);
+}
+
+function cancelFinishNotification() {
+  clearTimeout(finishTimer);
+  finishTimer = null;
+  finishAt = null;
+}
+
+function onFinishFired() {
+  finishTimer = null;
+  finishAt = null;
+  // 只有锁屏/屏保时才由主进程接管；屏幕亮着时渲染层的 tick() 会自行处理
+  if (isScreenLocked && mainWindow) {
+    new Notification({ title: "学习桌宠", body: finishLabel, silent: false }).show();
+    mainWindow.webContents.send("system:timer-finished");
+  }
+}
+
+// 解锁/唤醒时检查是否已错过完成时刻
+function checkFinishOnResume() {
+  if (finishAt !== null && Date.now() >= finishAt) {
+    finishAt = null;
+    clearTimeout(finishTimer);
+    finishTimer = null;
+    if (mainWindow) {
+      new Notification({ title: "学习桌宠", body: finishLabel, silent: false }).show();
+      mainWindow.webContents.send("system:timer-finished");
+    }
+  }
+}
 
 function createWindow() {
   mainWindow = new BrowserWindow({
@@ -35,15 +82,21 @@ app.whenReady().then(() => {
 
   // 屏保/锁屏/休眠检测
   powerMonitor.on("lock-screen", () => {
+    isScreenLocked = true;
     if (mainWindow) mainWindow.webContents.send("system:screen-locked");
   });
   powerMonitor.on("suspend", () => {
+    isScreenLocked = true;
     if (mainWindow) mainWindow.webContents.send("system:screen-locked");
   });
   powerMonitor.on("unlock-screen", () => {
+    checkFinishOnResume(); // 先检查是否错过了计时结束，再改标志位
+    isScreenLocked = false;
     if (mainWindow) mainWindow.webContents.send("system:screen-unlocked");
   });
   powerMonitor.on("resume", () => {
+    checkFinishOnResume();
+    isScreenLocked = false;
     if (mainWindow) mainWindow.webContents.send("system:screen-unlocked");
   });
 
@@ -120,4 +173,12 @@ ipcMain.handle("widget:is-pinned", () => {
     return false;
   }
   return mainWindow.isAlwaysOnTop();
+});
+
+ipcMain.on("timer:schedule-finish", (_, timestamp, label) => {
+  scheduleFinishNotification(timestamp, label);
+});
+
+ipcMain.on("timer:cancel-finish", () => {
+  cancelFinishNotification();
 });

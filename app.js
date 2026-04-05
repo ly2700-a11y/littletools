@@ -254,6 +254,7 @@ function notify(title, body) {
 }
 
 function finishSession() {
+  if (!state.isRunning) return; // 防止 tick 与主进程通知同时触发造成重入
   stopTimer();
   playFinishBeep();
   const type = sequence[currentSeqIndex];
@@ -303,6 +304,17 @@ function startTimer() {
   state.wallStart = Date.now();
   state.secondsSnapshot = state.secondsLeft;
   state.timerId = window.setInterval(tick, 1000);
+  if (isDesktop) {
+    const finishLabels = {
+      pomodoro: "专注时间结束，休息一下！",
+      shortBreak: "短休结束，继续专注！",
+      longBreak: "长休结束，继续学习！",
+    };
+    window.desktopWidget.scheduleFinish(
+      Date.now() + state.secondsLeft * 1000,
+      finishLabels[state.currentType] || "时间到"
+    );
+  }
   updateButtons();
   updatePetByState();
 }
@@ -319,6 +331,7 @@ function stopTimer() {
     window.clearInterval(state.timerId);
     state.timerId = null;
   }
+  if (isDesktop) window.desktopWidget.cancelFinish();
   updateButtons();
 }
 
@@ -646,6 +659,11 @@ if (isDesktop) {
       renderTimer();
       if (state.secondsLeft <= 0) finishSession();
     }
+  });
+
+  // 主进程在锁屏期间检测到计时结束时发出（AudioContext 在锁屏下无法发声时的替代路径）
+  window.desktopWidget.onTimerFinished(() => {
+    if (state.isRunning) finishSession();
   });
 }
 
