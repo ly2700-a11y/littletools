@@ -84,6 +84,8 @@ const state = {
   strictMode: false,
   stats: loadStats(),
   roundSlacks: [],
+  wallStart: null,       // 挂钟计时基准（Date.now()）
+  secondsSnapshot: 0,   // wallStart 时对应的 secondsLeft
 };
 
 // ─── DOM refs ────────────────────────────────────────────────────────────────
@@ -285,7 +287,12 @@ function loadSessionFromSeq() {
 }
 
 function tick() {
-  state.secondsLeft -= 1;
+  if (state.wallStart !== null) {
+    const elapsed = Math.floor((Date.now() - state.wallStart) / 1000);
+    state.secondsLeft = Math.max(0, state.secondsSnapshot - elapsed);
+  } else {
+    state.secondsLeft -= 1;
+  }
   renderTimer();
   if (state.secondsLeft <= 0) finishSession();
 }
@@ -293,13 +300,21 @@ function tick() {
 function startTimer() {
   if (state.isRunning) return;
   state.isRunning = true;
+  state.wallStart = Date.now();
+  state.secondsSnapshot = state.secondsLeft;
   state.timerId = window.setInterval(tick, 1000);
   updateButtons();
   updatePetByState();
 }
 
 function stopTimer() {
+  // 暂停前先用挂钟时间修正剩余秒数，避免恢复时跳变
+  if (state.wallStart !== null) {
+    const elapsed = Math.floor((Date.now() - state.wallStart) / 1000);
+    state.secondsLeft = Math.max(0, state.secondsSnapshot - elapsed);
+  }
   state.isRunning = false;
+  state.wallStart = null;
   if (state.timerId !== null) {
     window.clearInterval(state.timerId);
     state.timerId = null;
@@ -621,6 +636,16 @@ stopTimer = function () {
 if (isDesktop) {
   window.desktopWidget.onScreenLock(() => {
     handleSlack("屏幕锁定/进入屏保");
+  });
+
+  window.desktopWidget.onScreenUnlock(() => {
+    // 系统唤醒后立即用挂钟时间修正计时器，补上休眠期间流逝的时间
+    if (state.isRunning && state.wallStart !== null) {
+      const elapsed = Math.floor((Date.now() - state.wallStart) / 1000);
+      state.secondsLeft = Math.max(0, state.secondsSnapshot - elapsed);
+      renderTimer();
+      if (state.secondsLeft <= 0) finishSession();
+    }
   });
 }
 

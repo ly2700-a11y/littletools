@@ -40,6 +40,12 @@ app.whenReady().then(() => {
   powerMonitor.on("suspend", () => {
     if (mainWindow) mainWindow.webContents.send("system:screen-locked");
   });
+  powerMonitor.on("unlock-screen", () => {
+    if (mainWindow) mainWindow.webContents.send("system:screen-unlocked");
+  });
+  powerMonitor.on("resume", () => {
+    if (mainWindow) mainWindow.webContents.send("system:screen-unlocked");
+  });
 
   app.on("activate", () => {
     if (BrowserWindow.getAllWindows().length === 0) {
