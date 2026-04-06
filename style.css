@@ -869,3 +869,112 @@ body.mini .app {
   font-size: 28px;
   font-weight: 700;
 }
+
+/* ── Report overlay ──────────────────────────────────────────────────────── */
+
+.report-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 300;
+  background: #00000066;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.report-overlay.hidden {
+  display: none;
+}
+
+.report-box {
+  background: var(--panel);
+  border: 2px solid var(--line);
+  border-radius: 18px;
+  padding: 22px 20px 18px;
+  width: 100%;
+  max-width: 640px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 12px 40px #1f2a2440;
+  animation: pop-in 0.2s ease;
+}
+
+.report-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+}
+
+.report-title {
+  margin: 0;
+  font-size: 17px;
+}
+
+.report-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.report-tab {
+  padding: 6px 22px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: #fff;
+  color: var(--ink);
+  font: inherit;
+  font-weight: 700;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.report-tab.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+.report-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.report-nav-label {
+  font-weight: 700;
+  font-size: 13px;
+  flex: 1;
+  text-align: center;
+  color: var(--ink);
+}
+
+.report-chart {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #fff;
+  padding: 12px 6px 4px;
+  margin-bottom: 12px;
+  min-height: 180px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.report-chart svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.report-summary {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: #666;
+  text-align: center;
+}
+

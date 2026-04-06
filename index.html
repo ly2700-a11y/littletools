@@ -31,7 +31,10 @@
       <section class="panel timer-panel">
         <div class="timer-head">
           <h2>专注计时</h2>
-          <button id="settingsToggle" class="ghost small">⚙ 设置</button>
+          <div style="display:flex;gap:6px">
+            <button id="reportBtn" class="ghost small">📊 报告</button>
+            <button id="settingsToggle" class="ghost small">⚙ 设置</button>
+          </div>
         </div>
 
         <div class="settings-drawer" id="settingsDrawer">
@@ -104,16 +107,7 @@
         </div>
       </section>
 
-      <section class="panel pet-panel">
-        <div id="pet" class="pet calm" aria-label="桌宠状态">
-          <div class="pet-face">
-            <span class="eye eye-left"></span>
-            <span class="eye eye-right"></span>
-            <span class="mouth"></span>
-          </div>
-        </div>
-        <p id="petText" class="pet-text">我盯着你学习，别开小差。</p>
-      </section>
+
 
       <section class="panel rule-panel">
         <h2>监督规则</h2>
@@ -174,6 +168,28 @@
         <div class="mini-checkin-progress">
           <div id="miniCheckinFill" class="mini-checkin-fill"></div>
         </div>
+      </div>
+    </div>
+
+    <!-- 学习报告弹窗 -->
+    <div id="reportOverlay" class="report-overlay hidden">
+      <div class="report-box">
+        <div class="report-header">
+          <h2 class="report-title">学习报告</h2>
+          <button id="reportCloseBtn" class="ghost small">✕ 关闭</button>
+        </div>
+        <div class="report-tabs">
+          <button class="report-tab active" data-view="day">日</button>
+          <button class="report-tab" data-view="week">周</button>
+          <button class="report-tab" data-view="month">月</button>
+        </div>
+        <div class="report-nav">
+          <button id="reportPrevBtn" class="ghost small">‹ 上一个</button>
+          <span id="reportNavLabel" class="report-nav-label"></span>
+          <button id="reportNextBtn" class="ghost small">下一个 ›</button>
+        </div>
+        <div id="reportChart" class="report-chart"></div>
+        <p id="reportSummary" class="report-summary"></p>
       </div>
     </div>
 

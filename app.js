@@ -72,6 +72,37 @@ function saveStats() {
   localStorage.setItem("study-pet-stats", JSON.stringify(state.stats));
 }
 
+// ─── Focus Session Log ────────────────────────────────────────────────────────
+
+function loadFocusSessions() {
+  try {
+    const raw = localStorage.getItem("study-pet-sessions");
+    if (!raw) return [];
+    return JSON.parse(raw);
+  } catch { return []; }
+}
+
+function saveFocusSession(durationMins) {
+  const endTs = Date.now();
+  const startTs = endTs - durationMins * 60000;
+  const d = new Date(startTs);
+  const ds =
+    d.getFullYear() +
+    "-" + String(d.getMonth() + 1).padStart(2, "0") +
+    "-" + String(d.getDate()).padStart(2, "0");
+  const sessions = loadFocusSessions();
+  sessions.push({ dateStr: ds, hour: d.getHours(), duration: durationMins });
+  const cutoff = new Date(endTs - 365 * 864e5);
+  const cutoffStr =
+    cutoff.getFullYear() +
+    "-" + String(cutoff.getMonth() + 1).padStart(2, "0") +
+    "-" + String(cutoff.getDate()).padStart(2, "0");
+  localStorage.setItem(
+    "study-pet-sessions",
+    JSON.stringify(sessions.filter((s) => s.dateStr >= cutoffStr))
+  );
+}
+
 // ─── State ───────────────────────────────────────────────────────────────────
 
 const state = {
@@ -233,9 +264,11 @@ const petMessages = {
 };
 
 function setPetMood(moodClass, message) {
-  petEl.classList.remove("calm", "warn", "strict");
-  petEl.classList.add(moodClass);
-  petTextEl.textContent = message;
+  if (petEl) {
+    petEl.classList.remove("calm", "warn", "strict");
+    petEl.classList.add(moodClass);
+  }
+  if (petTextEl) petTextEl.textContent = message;
 }
 
 function updatePetByState() {
@@ -261,6 +294,7 @@ function finishSession() {
   if (type === "pomodoro") {
     state.stats.focusCount += 1;
     saveStats();
+    saveFocusSession(settings.focus);
     renderStats();
     notify("专注完成", "你完成了一轮专注，棒极了！");
     setPetMood("calm", "好样的，继续下一轮。");
@@ -686,3 +720,218 @@ renderSettingsInputs();
 updateButtons();
 updatePetByState();
 bindDesktopControls();
+
+// ─── Report Modal ─────────────────────────────────────────────────────────────
+
+const reportOverlayEl = document.getElementById("reportOverlay");
+const reportChartEl   = document.getElementById("reportChart");
+const reportSummaryEl = document.getElementById("reportSummary");
+const reportNavLabelEl = document.getElementById("reportNavLabel");
+const reportPrevBtn   = document.getElementById("reportPrevBtn");
+const reportNextBtn   = document.getElementById("reportNextBtn");
+
+const reportState = { view: "day", cursor: new Date() };
+
+function _dateStr(d) {
+  return (
+    d.getFullYear() +
+    "-" + String(d.getMonth() + 1).padStart(2, "0") +
+    "-" + String(d.getDate()).padStart(2, "0")
+  );
+}
+
+function _addDays(d, n) {
+  const nd = new Date(d);
+  nd.setDate(nd.getDate() + n);
+  return nd;
+}
+
+function _getMondayOf(d) {
+  const day = d.getDay();
+  return _addDays(d, day === 0 ? -6 : 1 - day);
+}
+
+function buildBarChartSVG(values, labels, showEvery) {
+  const W = 540, H = 196;
+  const padT = 18, padR = 18, padB = 44, padL = 40;
+  const cW = W - padL - padR;
+  const cH = H - padT - padB;
+
+  const maxVal = Math.max(...values, 1);
+  const rawMax = maxVal <= 30 ? Math.ceil(maxVal / 5) * 5 : Math.ceil(maxVal / 10) * 10;
+  const yMax = rawMax || 10;
+  const n = values.length;
+  const slotW = cW / n;
+  const barW = Math.max(3, slotW * 0.7);
+  const barOff = (slotW - barW) / 2;
+
+  let out = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}">`;
+
+  // Y grid lines + labels (5 ticks)
+  for (let i = 0; i <= 4; i++) {
+    const v = yMax * i / 4;
+    const y = (padT + cH - (v / yMax) * cH).toFixed(1);
+    out += `<line x1="${padL}" y1="${y}" x2="${W - padR}" y2="${y}" stroke="#e4ddd0" stroke-width="1"/>`;
+    out += `<text x="${padL - 5}" y="${(parseFloat(y) + 4).toFixed(1)}" text-anchor="end" font-size="10" fill="#aaa">${Math.round(v)}</text>`;
+  }
+  // Y axis label
+  const midY = (padT + cH / 2).toFixed(1);
+  out += `<text x="9" y="${midY}" text-anchor="middle" font-size="10" fill="#aaa" transform="rotate(-90,9,${midY})">分钟</text>`;
+
+  // Bars
+  values.forEach((v, i) => {
+    const barH = v > 0 ? Math.max((v / yMax) * cH, 3) : 0;
+    const x = (padL + i * slotW + barOff).toFixed(1);
+    const y = (padT + cH - barH).toFixed(1);
+    const bh = barH.toFixed(1);
+    const bw = barW.toFixed(1);
+    out += `<rect x="${x}" y="${y}" width="${bw}" height="${bh}" rx="3" fill="${v > 0 ? "#19647e" : "#f0ede6"}"/>`;
+    if (v > 0 && barH > 18) {
+      out += `<text x="${(padL + i * slotW + slotW / 2).toFixed(1)}" y="${(parseFloat(y) - 3).toFixed(1)}" text-anchor="middle" font-size="9" fill="#19647e" font-weight="600">${v}</text>`;
+    }
+  });
+
+  // X labels
+  values.forEach((_, i) => {
+    if (showEvery && i % showEvery !== 0) return;
+    const x = (padL + (i + 0.5) * slotW).toFixed(1);
+    out += `<text x="${x}" y="${H - padB + 15}" text-anchor="middle" font-size="9" fill="#aaa">${labels[i]}</text>`;
+  });
+
+  // Axes
+  out += `<line x1="${padL}" y1="${padT}" x2="${padL}" y2="${padT + cH}" stroke="#ccc" stroke-width="1.5"/>`;
+  out += `<line x1="${padL}" y1="${padT + cH}" x2="${W - padR}" y2="${padT + cH}" stroke="#ccc" stroke-width="1.5"/>`;
+  out += "</svg>";
+  return out;
+}
+
+function renderReport() {
+  const sessions = loadFocusSessions();
+  const { view, cursor } = reportState;
+  let values = [], labels = [], showEvery = 0, navText = "";
+  let totalMins = 0, totalCount = 0;
+
+  if (view === "day") {
+    const ds = _dateStr(cursor);
+    navText = ds;
+    const todaySessions = sessions.filter((s) => s.dateStr === ds);
+    values = Array(24).fill(0);
+    todaySessions.forEach((s) => { values[s.hour] += s.duration; });
+    labels = Array.from({ length: 24 }, (_, i) => String(i));
+    showEvery = 4;
+    totalMins = values.reduce((a, b) => a + b, 0);
+    totalCount = todaySessions.length;
+
+  } else if (view === "week") {
+    const monday = _getMondayOf(cursor);
+    const sunday = _addDays(monday, 6);
+    navText = `${_dateStr(monday)} ~ ${_dateStr(sunday)}`;
+    const dayNames = ["周一", "周二", "周三", "周四", "周五", "周六", "周日"];
+    values = Array(7).fill(0);
+    labels = dayNames;
+    for (let i = 0; i < 7; i++) {
+      const ds = _dateStr(_addDays(monday, i));
+      sessions.filter((s) => s.dateStr === ds).forEach((s) => {
+        values[i] += s.duration;
+        totalCount++;
+      });
+    }
+    totalMins = values.reduce((a, b) => a + b, 0);
+    showEvery = 0;
+
+  } else {
+    const year = cursor.getFullYear();
+    const month = cursor.getMonth();
+    const days = new Date(year, month + 1, 0).getDate();
+    navText = `${year} 年 ${month + 1} 月`;
+    values = Array(days).fill(0);
+    labels = Array.from({ length: days }, (_, i) => String(i + 1));
+    showEvery = 5;
+    for (let i = 0; i < days; i++) {
+      const ds = `${year}-${String(month + 1).padStart(2, "0")}-${String(i + 1).padStart(2, "0")}`;
+      sessions.filter((s) => s.dateStr === ds).forEach((s) => {
+        values[i] += s.duration;
+        totalCount++;
+      });
+    }
+    totalMins = values.reduce((a, b) => a + b, 0);
+  }
+
+  reportNavLabelEl.textContent = navText;
+  reportChartEl.innerHTML = buildBarChartSVG(values, labels, showEvery);
+  reportSummaryEl.textContent =
+    totalMins > 0
+      ? `本期专注总时长 ${totalMins} 分钟（共 ${totalCount} 轮）`
+      : "本期暂无专注记录";
+
+  // Disable next btn when at current period
+  const today = new Date();
+  if (view === "day") {
+    reportNextBtn.disabled = _dateStr(cursor) >= _dateStr(today);
+  } else if (view === "week") {
+    reportNextBtn.disabled = _dateStr(_getMondayOf(cursor)) >= _dateStr(_getMondayOf(today));
+  } else {
+    reportNextBtn.disabled =
+      cursor.getFullYear() === today.getFullYear() &&
+      cursor.getMonth() === today.getMonth();
+  }
+}
+
+function openReport() {
+  reportState.view = "day";
+  reportState.cursor = new Date();
+  reportOverlayEl.querySelectorAll(".report-tab").forEach((t) =>
+    t.classList.toggle("active", t.dataset.view === "day")
+  );
+  reportOverlayEl.classList.remove("hidden");
+  renderReport();
+}
+
+function closeReport() {
+  reportOverlayEl.classList.add("hidden");
+}
+
+document.getElementById("reportBtn").addEventListener("click", openReport);
+document.getElementById("reportCloseBtn").addEventListener("click", closeReport);
+reportOverlayEl.addEventListener("click", (e) => {
+  if (e.target === reportOverlayEl) closeReport();
+});
+
+reportOverlayEl.querySelectorAll(".report-tab").forEach((btn) => {
+  btn.addEventListener("click", () => {
+    reportOverlayEl.querySelectorAll(".report-tab").forEach((t) =>
+      t.classList.remove("active")
+    );
+    btn.classList.add("active");
+    reportState.view = btn.dataset.view;
+    reportState.cursor = new Date();
+    renderReport();
+  });
+});
+
+reportPrevBtn.addEventListener("click", () => {
+  const { view, cursor } = reportState;
+  if (view === "day") reportState.cursor = _addDays(cursor, -1);
+  else if (view === "week") reportState.cursor = _addDays(cursor, -7);
+  else {
+    const d = new Date(cursor);
+    d.setDate(1);
+    d.setMonth(d.getMonth() - 1);
+    reportState.cursor = d;
+  }
+  renderReport();
+});
+
+reportNextBtn.addEventListener("click", () => {
+  const { view, cursor } = reportState;
+  if (view === "day") reportState.cursor = _addDays(cursor, 1);
+  else if (view === "week") reportState.cursor = _addDays(cursor, 7);
+  else {
+    const d = new Date(cursor);
+    d.setDate(1);
+    d.setMonth(d.getMonth() + 1);
+    reportState.cursor = d;
+  }
+  renderReport();
+});
+
