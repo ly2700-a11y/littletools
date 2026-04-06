@@ -54,17 +54,29 @@ function getDuration(type) {
 
 // ─── Stats ───────────────────────────────────────────────────────────────────
 
+function getTodayStr() {
+  const d = new Date();
+  return (
+    d.getFullYear() +
+    "-" + String(d.getMonth() + 1).padStart(2, "0") +
+    "-" + String(d.getDate()).padStart(2, "0")
+  );
+}
+
 function loadStats() {
   try {
     const raw = localStorage.getItem("study-pet-stats");
-    if (!raw) return { focusCount: 0, slackCount: 0 };
+    const today = getTodayStr();
+    if (!raw) return { focusCount: 0, slackCount: 0, dateStr: today };
     const parsed = JSON.parse(raw);
+    if (parsed.dateStr !== today) return { focusCount: 0, slackCount: 0, dateStr: today };
     return {
       focusCount: Number(parsed.focusCount) || 0,
       slackCount: Number(parsed.slackCount) || 0,
+      dateStr: today,
     };
   } catch {
-    return { focusCount: 0, slackCount: 0 };
+    return { focusCount: 0, slackCount: 0, dateStr: getTodayStr() };
   }
 }
 
@@ -322,6 +334,14 @@ function loadSessionFromSeq() {
 }
 
 function tick() {
+  // 午夜自动清零今日数据
+  const todayStr = getTodayStr();
+  if (state.stats.dateStr !== todayStr) {
+    state.stats = { focusCount: 0, slackCount: 0, dateStr: todayStr };
+    state.roundSlacks = [];
+    saveStats();
+    renderStats();
+  }
   if (state.wallStart !== null) {
     const elapsed = Math.floor((Date.now() - state.wallStart) / 1000);
     state.secondsLeft = Math.max(0, state.secondsSnapshot - elapsed);
